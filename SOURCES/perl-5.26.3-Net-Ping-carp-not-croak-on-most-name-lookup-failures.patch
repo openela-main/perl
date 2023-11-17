@@ -1,0 +1,99 @@
+From 5a3f94a3f0e21d8e685ede4e851a318578a2151f Mon Sep 17 00:00:00 2001
+From: Jitka Plesnikova <jplesnik@redhat.com>
+Date: Thu, 17 Jun 2021 11:12:30 +0200
+Subject: [PATCH 1/2] carp, not croak on most name lookup failures
+
+See RT #124830, a regression.
+Return undef instead.
+
+Backported from Net-Ping 2.67
+---
+ dist/Net-Ping/lib/Net/Ping.pm | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/dist/Net-Ping/lib/Net/Ping.pm b/dist/Net-Ping/lib/Net/Ping.pm
+index 13cbe81..9e2497c 100644
+--- a/dist/Net-Ping/lib/Net/Ping.pm
++++ b/dist/Net-Ping/lib/Net/Ping.pm
+@@ -144,7 +144,7 @@ sub new
+   if ($self->{'host'}) {
+     my $host = $self->{'host'};
+     my $ip = _resolv($host)
+-      or croak("could not resolve host $host");
++      or carp("could not resolve host $host");
+     $self->{host} = $ip;
+     $self->{family} = $ip->{family};
+   }
+@@ -152,7 +152,7 @@ sub new
+   if ($self->{bind}) {
+     my $addr = $self->{bind};
+     my $ip = _resolv($addr)
+-      or croak("could not resolve local addr $addr");
++      or carp("could not resolve local addr $addr");
+     $self->{local_addr} = $ip;
+   } else {
+     $self->{local_addr} = undef;              # Don't bind by default
+@@ -323,7 +323,7 @@ sub bind
+     ($self->{proto} eq "udp" || $self->{proto} eq "icmp");
+ 
+   $ip = $self->_resolv($local_addr);
+-  croak("nonexistent local address $local_addr") unless defined($ip);
++  carp("nonexistent local address $local_addr") unless defined($ip);
+   $self->{local_addr} = $ip;
+ 
+   if (($self->{proto} ne "udp") && 
+@@ -1129,13 +1129,14 @@ sub open
+     $self->{family_local} = $self->{family};
+   }
+ 
+-  $ip = $self->_resolv($host);
+   $timeout = $self->{timeout} unless $timeout;
++  $ip = $self->_resolv($host);
+ 
+-  if($self->{proto} eq "stream") {
+-    if(defined($self->{fh}->fileno())) {
++  if ($self->{proto} eq "stream") {
++    if (defined($self->{fh}->fileno())) {
+       croak("socket is already open");
+     } else {
++      return () unless $ip;
+       $self->tcp_connect($ip, $timeout);
+     }
+   }
+@@ -1851,12 +1852,11 @@ sub _resolv {
+         }
+         return \%h
+       } else {
+-        croak("getnameinfo($getaddr[0]->{addr}) failed - $err");
++        carp("getnameinfo($getaddr[0]->{addr}) failed - $err");
+       }
+     } else {
+-      my $error = sprintf "getaddrinfo($h{host},,%s) failed - $err",
+-                  ($family == AF_INET) ? "AF_INET" : "AF_INET6";
+-      croak("$error");
++      warn(sprintf("getaddrinfo($h{host},,%s) failed - $err",
++                    $family == AF_INET ? "AF_INET" : "AF_INET6"));
+     }
+   # old way
+   } else {
+@@ -1871,7 +1871,7 @@ sub _resolv {
+       $h{family} = AF_INET;
+       return \%h
+     } else {
+-      croak("gethostbyname($h{host}) failed - $^E");
++      carp("gethostbyname($h{host}) failed - $^E");
+     }
+   }
+ }
+@@ -1913,7 +1913,7 @@ sub _inet_ntoa {
+     if (defined($address)) {
+       $ret = $address;
+     } else {
+-      croak("getnameinfo($addr) failed - $err");
++      carp("getnameinfo($addr) failed - $err");
+     }
+   } else {
+     $ret = inet_ntoa($addr)
+-- 
+2.31.1
+

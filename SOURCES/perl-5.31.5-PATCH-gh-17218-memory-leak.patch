@@ -1,0 +1,22 @@
+From 70f089724b15d1b2ed9264f277454aa559d50232 Mon Sep 17 00:00:00 2001
+From: Karl Williamson <khw@cpan.org>
+Date: Fri, 15 Nov 2019 15:01:15 -0700
+Subject: [PATCH] PATCH: gh#17218 memory leak
+
+Indeed, a variable's ref count was not getting decremented.
+---
+ regcomp.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/regcomp.c b/regcomp.c
+index ddac290d2bf0..de4f6f24dac8 100644
+--- a/regcomp.c
++++ b/regcomp.c
+@@ -17602,6 +17602,7 @@ S_regclass(pTHX_ RExC_state_t *pRExC_state, I32 *flagp, U32 depth,
+ 
+                 /* Likewise for 'posixes' */
+                 _invlist_union(posixes, cp_list, &cp_list);
++                SvREFCNT_dec(posixes);
+ 
+                 /* Likewise for anything else in the range that matched only
+                  * under UTF-8 */
