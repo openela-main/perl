@@ -100,7 +100,7 @@ License:        GPL+ or Artistic
 Epoch:          %{perl_epoch}
 Version:        %{perl_version}
 # release number must be even higher, because dual-lived modules will be broken otherwise
-Release:        472%{?dist}
+Release:        473%{?dist}
 Summary:        Practical Extraction and Report Language
 Url:            https://www.perl.org/
 Source0:        https://www.cpan.org/src/5.0/perl-%{perl_version}.tar.xz
@@ -280,6 +280,10 @@ Patch57:        perl-5.32.1-Perl_do_sv_dump-handle-PL_strtab.patch
 # in upstream after 5.33.8
 Patch58:        perl-5.33.8-Fix-broken-left-shift-of-IV_MIN-under-use-integer.patch
 
+# Fix write past buffer end via illegal user-defined Unicode property
+# CVE-2023-47038
+Patch59:        perl-5.32.1-CVE-2023-47038.patch
+
 # Link XS modules to libperl.so with EU::CBuilder on Linux, bug #960048
 Patch200:       perl-5.16.3-Link-XS-modules-to-libperl.so-with-EU-CBuilder-on-Li.patch
 
@@ -353,7 +357,7 @@ Requires:       perl-utils
 %endif
 
 Requires:       perl-Archive-Tar, perl-Attribute-Handlers, perl-autodie,
-Requires:       perl-AutoLoader, perl-AutoSplit,
+Requires:       perl-AutoLoader, perl-AutoSplit, perl-autouse,
 Requires:       perl-B, perl-base, perl-Benchmark, perl-bignum, perl-blib,
 Requires:       perl-Carp, perl-Class-Struct,
 Requires:       perl-Compress-Raw-Bzip2, perl-Compress-Raw-Zlib,
@@ -375,7 +379,8 @@ Requires:       perl-ExtUtils-CBuilder, perl-ExtUtils-Constant,
 Requires:       perl-ExtUtils-Command,
 Requires:       perl-ExtUtils-Embed, perl-ExtUtils-Install,
 Requires:       perl-ExtUtils-MakeMaker, perl-ExtUtils-Manifest,
-Requires:       perl-ExtUtils-Miniperl, perl-ExtUtils-ParseXS,
+Requires:       perl-ExtUtils-Miniperl, perl-ExtUtils-MM-Utils,
+Requires:       perl-ExtUtils-ParseXS,
 Requires:       perl-Fcntl, perl-fields,
 Requires:       perl-File-Basename, perl-File-Compare, perl-File-Copy,
 Requires:       perl-File-DosGlob, perl-File-Fetch,
@@ -4338,6 +4343,7 @@ you're not running VMS, this module does nothing.
 %patch56 -p1
 %patch57 -p1
 %patch58 -p1
+%patch59 -p1
 %patch200 -p1
 %patch201 -p1
 %patch202 -p1
@@ -4395,7 +4401,8 @@ perl -x patchlevel.h \
     'Fedora Patch55: Prevent the number of buckets in a hash from getting too large' \
     'Fedora Patch56: Fix a memory leak when compiling a regular expression (GH#18604)' \
     'Fedora Patch57: Fix dumping a hash entry of PL_strtab type' \
-    'Fedora Patch57: Fix an arithmetic left shift of a minimal integer value (GH#18639)' \
+    'Fedora Patch58: Fix an arithmetic left shift of a minimal integer value (GH#18639)' \
+    'RHEL Patch59: Fix write past buffer end via illegal user-defined Unicode property (CVE-2023-47038)' \
     'Fedora Patch200: Link XS modules to libperl.so with EU::CBuilder on Linux' \
     'Fedora Patch201: Link XS modules to libperl.so with EU::MM on Linux' \
     'Fedora Patch202: Add definition of OPTIMIZE to .ph files (bug #2159760)' \
@@ -4685,9 +4692,17 @@ pushd t
 popd
 %if %{parallel_tests}
     JOBS=$(printf '%%s' "%{?_smp_mflags}" | sed 's/.*-j\([0-9][0-9]*\).*/\1/')
+%ifarch s390 s390x
+    LC_ALL=C TEST_JOBS=$JOBS make test_harness DFLTCC=0
+%else
     LC_ALL=C TEST_JOBS=$JOBS make test_harness
+%endif
+%else
+%ifarch s390 s390x
+    LC_ALL=C make test DFLTCC=0
 %else
     LC_ALL=C make test
+%endif
 %endif
 %endif
 
@@ -7108,6 +7123,10 @@ popd
 
 # Old changelog entries are preserved in CVS.
 %changelog
+* Tue Nov 28 2023 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.32.1-473
+- Fix CVE-2023-47038
+- Added perl-autouse and perl-ExtUtils-MM-Utils to perl run-requires
+
 * Wed Jan 18 2023 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.32.1-472
 - Add definition of OPTIMIZE to .ph files, if optimizing is used
   (bug#2159760)
