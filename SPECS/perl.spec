@@ -100,7 +100,7 @@ License:        GPL+ or Artistic
 Epoch:          %{perl_epoch}
 Version:        %{perl_version}
 # release number must be even higher, because dual-lived modules will be broken otherwise
-Release:        481%{?dist}
+Release:        481.1%{?dist}
 Summary:        Practical Extraction and Report Language
 Url:            https://www.perl.org/
 Source0:        https://www.cpan.org/src/5.0/perl-%{perl_version}.tar.xz
@@ -283,6 +283,10 @@ Patch58:        perl-5.33.8-Fix-broken-left-shift-of-IV_MIN-under-use-integer.pa
 # Fix write past buffer end via illegal user-defined Unicode property
 # CVE-2023-47038
 Patch59:        perl-5.32.1-CVE-2023-47038.patch
+
+# Fix CVE-2025-40909 - Fixed in upstream since 5.42.0
+Patch60:        perl-5.42.0-CVE-2025-40909-Clone-dirhandles-without-fchdir.patch
+Patch61:        perl-5.42.0-Use-PerlLIO_dup_cloexec-in-Perl_dirp_dup-to-set-O_CL.patch
 
 # Link XS modules to libperl.so with EU::CBuilder on Linux, bug #960048
 Patch200:       perl-5.16.3-Link-XS-modules-to-libperl.so-with-EU-CBuilder-on-Li.patch
@@ -4348,6 +4352,8 @@ you're not running VMS, this module does nothing.
 %patch57 -p1
 %patch58 -p1
 %patch59 -p1
+%patch60 -p1
+%patch61 -p1
 %patch200 -p1
 %patch201 -p1
 %patch202 -p1
@@ -4407,6 +4413,7 @@ perl -x patchlevel.h \
     'Fedora Patch57: Fix dumping a hash entry of PL_strtab type' \
     'Fedora Patch58: Fix an arithmetic left shift of a minimal integer value (GH#18639)' \
     'RHEL Patch59: Fix write past buffer end via illegal user-defined Unicode property (CVE-2023-47038)' \
+    'RHEL Patch60: Fix CVE-2025-40909' \
     'Fedora Patch200: Link XS modules to libperl.so with EU::CBuilder on Linux' \
     'Fedora Patch201: Link XS modules to libperl.so with EU::MM on Linux' \
     'Fedora Patch202: Add definition of OPTIMIZE to .ph files (bug #2159759)' \
@@ -5359,6 +5366,8 @@ rm %{buildroot}%{_mandir}/man3/version::Internals.3*
 %check
 %if %{with test}
 %{new_perl} -I/lib regen/lib_cleanup.pl
+%{new_perl} -Ilib Porting/checkcfgvar.pl --regen --default=undef
+%{new_perl} -Ilib regen/uconfig_h.pl
 pushd t
 %{new_perl} -I../lib porting/customized.t --regen
 popd
@@ -7182,6 +7191,9 @@ popd
 
 # Old changelog entries are preserved in CVS.
 %changelog
+* Thu Jul 03 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.32.1-481.1
+- Fixes: CVE-2025-40909 - Clone dirhandles without fchdir
+
 * Mon Nov 27 2023 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.32.1-481
 - Fixes: CVE-2023-47038
 
