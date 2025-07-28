@@ -81,7 +81,7 @@ License:              GPL+ or Artistic
 Epoch:                %{perl_epoch}
 Version:              %{perl_version}
 # release number must be even higher, because dual-lived modules will be broken otherwise
-Release:              422%{?dist}
+Release:              423%{?dist}
 Summary:              Practical Extraction and Report Language
 Url:                  http://www.perl.org/
 Source0:              http://www.cpan.org/src/5.0/perl-%{perl_version}.tar.bz2
@@ -314,6 +314,9 @@ Patch96:              perl-5.26.3-Net-Ping-Fix-_resolv-return-value.patch
 # Fix a memory leak when compiling a regular expression with a non-word class,
 # GH#17218, in upstream after 5.31.5
 Patch97:              perl-5.31.5-PATCH-gh-17218-memory-leak.patch
+
+# Fix CVE-2025-40909 - Fixed in upstream since 5.42.0
+Patch98:              perl-5.42.0-CVE-2025-40909-Clone-dirhandles-without-fchdir.patch
 
 # Link XS modules to libperl.so with EU::CBuilder on Linux, bug #960048
 Patch200:             perl-5.16.3-Link-XS-modules-to-libperl.so-with-EU-CBuilder-on-Li.patch
@@ -2935,6 +2938,7 @@ Perl extension for Version Objects
 %patch95 -p1
 %patch96 -p1
 %patch97 -p1
+%patch98 -p1
 %patch200 -p1
 %patch201 -p1
 %patch202 -p1
@@ -2999,6 +3003,7 @@ perl -x patchlevel.h \
     'RHEL Patch94: Fix CVE-2020-10878' \
     'RHEL Patch95: Fix Net-Ping _resolv return value on failing DNS name lookup (bug #1973030)' \
     'RHEL Patch97: Fix a memory leak when compiling a regular expression with a non-word class (GH#17218)' \
+    'RHEL Patch98: Fix CVE-2025-40909' \
     'Fedora Patch200: Link XS modules to libperl.so with EU::CBuilder on Linux' \
     'Fedora Patch201: Link XS modules to libperl.so with EU::MM on Linux' \
     'Fedora Patch202: Add definition of OPTIMIZE to .ph files (bug #2152012)' \
@@ -3281,14 +3286,24 @@ sed \
 %check
 %if %{with test}
 %{new_perl} -I/lib regen/lib_cleanup.pl
+%{new_perl} -Ilib Porting/checkcfgvar.pl --regen --default=undef
+%{new_perl} -Ilib regen/uconfig_h.pl
 pushd t
 %{new_perl} -I../lib porting/customized.t --regen
 popd
 %if %{parallel_tests}
     JOBS=$(printf '%%s' "%{?_smp_mflags}" | sed 's/.*-j\([0-9][0-9]*\).*/\1/')
+%ifarch s390 s390x
+    LC_ALL=C TEST_JOBS=$JOBS make test_harness DFLTCC=0
+%else
     LC_ALL=C TEST_JOBS=$JOBS make test_harness
+%endif
+%else
+%ifarch s390 s390x
+    LC_ALL=C make test DFLTCC=0
 %else
     LC_ALL=C make test
+%endif
 %endif
 %endif
 
@@ -5289,9 +5304,13 @@ popd
 
 # Old changelog entries are preserved in CVS.
 %changelog
-* Thu Jan 25 2024 Release Engineering <releng@openela.org> - %{perl_version}
+* Mon Jul 28 2025 Release Engineering <releng@openela.org> - %{perl_version}
 - Backport patches from CentOS
 - Fix Time-Local tests to pass after year 2019 (bug #1807120)
+
+* Wed Jul 02 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.26.3-423
+- Fix CVE-2025-40909 - Clone dirhandles without fchdir
+- Fix test broken by update in zlib on s390x
 
 * Wed Jan 11 2023 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.26.3-422
 - Add definition of OPTIMIZE to .ph files, if optimizing is used
