@@ -81,7 +81,7 @@ License:              GPL+ or Artistic
 Epoch:                %{perl_epoch}
 Version:              %{perl_version}
 # release number must be even higher, because dual-lived modules will be broken otherwise
-Release:              423%{?dist}
+Release:              423%{?dist}.1
 Summary:              Practical Extraction and Report Language
 Url:                  http://www.perl.org/
 Source0:              http://www.cpan.org/src/5.0/perl-%{perl_version}.tar.bz2
@@ -317,6 +317,10 @@ Patch97:              perl-5.31.5-PATCH-gh-17218-memory-leak.patch
 
 # Fix CVE-2025-40909 - Fixed in upstream since 5.42.0
 Patch98:              perl-5.42.0-CVE-2025-40909-Clone-dirhandles-without-fchdir.patch
+
+# Fix CVE-2026-13221 - Don't create a trie that would overflow
+# https://github.com/Perl/perl5/commit/03f74bbbd3a68350d926ee93d56ee4808c28c4c7
+Patch99:              perl-5.26.3-CVE-2026-13221.patch
 
 # Link XS modules to libperl.so with EU::CBuilder on Linux, bug #960048
 Patch200:             perl-5.16.3-Link-XS-modules-to-libperl.so-with-EU-CBuilder-on-Li.patch
@@ -2939,6 +2943,7 @@ Perl extension for Version Objects
 %patch96 -p1
 %patch97 -p1
 %patch98 -p1
+%patch99 -p1
 %patch200 -p1
 %patch201 -p1
 %patch202 -p1
@@ -3004,6 +3009,7 @@ perl -x patchlevel.h \
     'RHEL Patch95: Fix Net-Ping _resolv return value on failing DNS name lookup (bug #1973030)' \
     'RHEL Patch97: Fix a memory leak when compiling a regular expression with a non-word class (GH#17218)' \
     'RHEL Patch98: Fix CVE-2025-40909' \
+    'RHEL Patch99: Fix CVE-2026-13221' \
     'Fedora Patch200: Link XS modules to libperl.so with EU::CBuilder on Linux' \
     'Fedora Patch201: Link XS modules to libperl.so with EU::MM on Linux' \
     'Fedora Patch202: Add definition of OPTIMIZE to .ph files (bug #2152012)' \
@@ -5304,9 +5310,12 @@ popd
 
 # Old changelog entries are preserved in CVS.
 %changelog
-* Mon Jul 28 2025 Release Engineering <releng@openela.org> - %{perl_version}
+* Mon Sep 14 2026 Release Engineering <releng@openela.org> - %{perl_version}
 - Backport patches from CentOS
 - Fix Time-Local tests to pass after year 2019 (bug #1807120)
+
+* Tue Aug 25 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 4:5.26.3-423.1
+- Fix CVE-2026-13221 - Don't create a regex trie that would overflow
 
 * Wed Jul 02 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.26.3-423
 - Fix CVE-2025-40909 - Clone dirhandles without fchdir
