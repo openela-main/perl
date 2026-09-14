@@ -117,7 +117,7 @@ License:        GPL-1.0-or-later OR Artistic-1.0-Perl
 Epoch:          %{perl_epoch}
 Version:        %{perl_version}
 # release number must be even higher, because dual-lived modules will be broken otherwise
-Release:        512.2%{?dist}
+Release:        515%{?dist}
 Summary:        Practical Extraction and Report Language
 Url:            https://www.perl.org/
 Source0:        https://www.cpan.org/src/5.0/perl-%{perl_version}.tar.xz
@@ -186,6 +186,10 @@ Patch13:        perl-5.28.0-Pass-CFLAGS-to-dtrace.patch
 # Fix CVE-2025-40909 - Fixed in upstream since 5.42.0
 Patch14:        perl-5.42.0-CVE-2025-40909-Clone-dirhandles-without-fchdir.patch
 Patch15:        perl-5.42.0-Use-PerlLIO_dup_cloexec-in-Perl_dirp_dup-to-set-O_CL.patch
+
+# Fix CVE-2026-13221 - regcomp_study: Don't create a trie that would overflow
+# https://github.com/Perl/perl5/commit/03f74bbbd3a68350d926ee93d56ee4808c28c4c7
+Patch16:        perl-5.40.2-CVE-2026-13221.patch
 
 # Link XS modules to libperl.so with EU::CBuilder on Linux, bug #960048
 Patch200:       perl-5.16.3-Link-XS-modules-to-libperl.so-with-EU-CBuilder-on-Li.patch
@@ -4245,6 +4249,7 @@ you're not running VMS, this module does nothing.
 %patch -P13 -p1
 %patch -P14 -p1
 %patch -P15 -p1
+%patch -P16 -p1
 %patch -P200 -p1
 %patch -P201 -p1
 %patch -P202 -p1
@@ -4267,6 +4272,7 @@ perl -x patchlevel.h \
     'Fedora Patch12: Link XS modules to pthread library to fix linking with -z defs' \
     'Fedora Patch13: Pass the correct CFLAGS to dtrace' \
     'Fedora Patch14: Fix CVE-2025-40909' \
+    'Fedora Patch16: Fix CVE-2026-13221' \
     'Fedora Patch200: Link XS modules to libperl.so with EU::CBuilder on Linux' \
     'Fedora Patch201: Link XS modules to libperl.so with EU::MM on Linux' \
     'Fedora Patch202: Add definition of OPTIMIZE to .ph files' \
@@ -7294,12 +7300,16 @@ ln -s /app/bin/perl %{buildroot}/usr/bin/perl
 
 # Old changelog entries are preserved in CVS.
 %changelog
-* Thu Jul 10 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.40.0-512.2
+* Fri Aug 21 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 4:5.40.2-515
+- Fixes: CVE-2026-13221 - regcomp_study: Don't create a trie that would
+  overflow
+
+* Thu Jul 10 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.40.1-514
 - Fixes: CVE-2025-40909 - Clone dirhandles without fchdir
 
-* Tue Apr 15 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.40.2-512.1
+* Tue Apr 15 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.40.2-513
 - 5.40.2 bump (see <https://metacpan.org/release/SHAY/perl-5.40.2/view/pod/perldelta.pod>)
-- Resolves: RHEL-87185
+- Resolves: RHEL-87186
 
 * Wed Jan 22 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.40.1-512
 - Resolves: RHEL-75798
