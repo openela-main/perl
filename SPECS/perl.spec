@@ -100,7 +100,7 @@ License:        GPL+ or Artistic
 Epoch:          %{perl_epoch}
 Version:        %{perl_version}
 # release number must be even higher, because dual-lived modules will be broken otherwise
-Release:        481.1%{?dist}
+Release:        484%{?dist}
 Summary:        Practical Extraction and Report Language
 Url:            https://www.perl.org/
 Source0:        https://www.cpan.org/src/5.0/perl-%{perl_version}.tar.xz
@@ -287,6 +287,10 @@ Patch59:        perl-5.32.1-CVE-2023-47038.patch
 # Fix CVE-2025-40909 - Fixed in upstream since 5.42.0
 Patch60:        perl-5.42.0-CVE-2025-40909-Clone-dirhandles-without-fchdir.patch
 Patch61:        perl-5.42.0-Use-PerlLIO_dup_cloexec-in-Perl_dirp_dup-to-set-O_CL.patch
+
+# CVE-2026-13221
+# https://github.com/Perl/perl5/commit/03f74bbbd3a68350d926ee93d56ee4808c28c4c7
+Patch62:        perl-5.32.1-CVE-2026-13221.patch
 
 # Link XS modules to libperl.so with EU::CBuilder on Linux, bug #960048
 Patch200:       perl-5.16.3-Link-XS-modules-to-libperl.so-with-EU-CBuilder-on-Li.patch
@@ -4354,6 +4358,7 @@ you're not running VMS, this module does nothing.
 %patch59 -p1
 %patch60 -p1
 %patch61 -p1
+%patch62 -p1
 %patch200 -p1
 %patch201 -p1
 %patch202 -p1
@@ -4414,6 +4419,7 @@ perl -x patchlevel.h \
     'Fedora Patch58: Fix an arithmetic left shift of a minimal integer value (GH#18639)' \
     'RHEL Patch59: Fix write past buffer end via illegal user-defined Unicode property (CVE-2023-47038)' \
     'RHEL Patch60: Fix CVE-2025-40909' \
+    'RHEL Patch62: Fix CVE-2026-13221 - Don'\''t create a trie that would overflow' \
     'Fedora Patch200: Link XS modules to libperl.so with EU::CBuilder on Linux' \
     'Fedora Patch201: Link XS modules to libperl.so with EU::MM on Linux' \
     'Fedora Patch202: Add definition of OPTIMIZE to .ph files (bug #2159759)' \
@@ -7191,7 +7197,13 @@ popd
 
 # Old changelog entries are preserved in CVS.
 %changelog
-* Thu Jul 03 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.32.1-481.1
+* Tue Aug 25 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 4:5.32.1-484
+- Fixes: CVE-2026-13221 - Don't create a trie that would overflow
+
+* Thu Jul 10 2025 Jitka Plesnikova <jplesnik@redhat.com>
+- Resolves: RHEL-96651
+
+* Fri Jul 04 2025 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.32.1-482
 - Fixes: CVE-2025-40909 - Clone dirhandles without fchdir
 
 * Mon Nov 27 2023 Jitka Plesnikova <jplesnik@redhat.com> - 4:5.32.1-481
